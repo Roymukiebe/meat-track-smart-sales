@@ -25,6 +25,7 @@ const NavigationBar = ({ activeView, onViewChange, userRole, onLogout }: Navigat
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart, roles: ['owner', 'staff'] },
     { id: 'sales', label: 'New Sale', icon: ShoppingCart, roles: ['owner', 'staff'] },
+    { id: 'sales-entry', label: 'Sales Entry', icon: FileText, roles: ['owner', 'staff'], isLink: true, path: '/sales-entry' },
     { id: 'reports', label: 'Reports', icon: FileText, roles: ['owner'] },
     { id: 'staff', label: 'Staff Management', icon: Users, roles: ['owner'] },
     { id: 'settings', label: 'Settings', icon: Settings, roles: ['owner'] },
@@ -54,6 +55,21 @@ const NavigationBar = ({ activeView, onViewChange, userRole, onLogout }: Navigat
             <div className="flex space-x-1">
               {filteredMenuItems.map(item => {
                 const Icon = item.icon;
+                if (item.isLink && item.path) {
+                  return (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      asChild
+                      className="flex items-center space-x-2"
+                    >
+                      <a href={item.path}>
+                        <Icon className="w-4 h-4" />
+                        <span>{item.label}</span>
+                      </a>
+                    </Button>
+                  );
+                }
                 return (
                   <Button
                     key={item.id}
@@ -102,6 +118,22 @@ const NavigationBar = ({ activeView, onViewChange, userRole, onLogout }: Navigat
             <div className="px-4 py-2 space-y-1">
               {filteredMenuItems.map(item => {
                 const Icon = item.icon;
+                if (item.isLink && item.path) {
+                  return (
+                    <Button
+                      key={item.id}
+                      variant="ghost"
+                      asChild
+                      className="w-full justify-start"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      <a href={item.path}>
+                        <Icon className="w-4 h-4 mr-2" />
+                        {item.label}
+                      </a>
+                    </Button>
+                  );
+                }
                 return (
                   <Button
                     key={item.id}
