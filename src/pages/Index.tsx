@@ -26,17 +26,31 @@ const Index = () => {
   };
 
   const renderActiveView = () => {
+    const baseClasses = "animate-fade-in";
+    
     switch (activeView) {
       case 'dashboard':
-        return <Dashboard />;
+        return (
+          <div className={baseClasses}>
+            <Dashboard />
+          </div>
+        );
       case 'sales':
-        return <SalesInterface />;
+        return (
+          <div className={baseClasses}>
+            <SalesInterface />
+          </div>
+        );
       case 'reports':
-        return <ReportsView />;
+        return (
+          <div className={baseClasses}>
+            <ReportsView />
+          </div>
+        );
       case 'staff':
         return (
-          <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center">
-            <div className="text-center">
+          <div className={`${baseClasses} min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center`}>
+            <div className="text-center animate-scale-in">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Staff Management</h2>
               <p className="text-gray-600">Staff management features coming soon...</p>
             </div>
@@ -44,20 +58,28 @@ const Index = () => {
         );
       case 'settings':
         return (
-          <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center">
-            <div className="text-center">
+          <div className={`${baseClasses} min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center`}>
+            <div className="text-center animate-scale-in">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Settings</h2>
               <p className="text-gray-600">System settings coming soon...</p>
             </div>
           </div>
         );
       default:
-        return <Dashboard />;
+        return (
+          <div className={baseClasses}>
+            <Dashboard />
+          </div>
+        );
     }
   };
 
   if (!user) {
-    return <LoginForm onLogin={handleLogin} />;
+    return (
+      <div className="animate-fade-in">
+        <LoginForm onLogin={handleLogin} />
+      </div>
+    );
   }
 
   return (

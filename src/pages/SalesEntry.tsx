@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -142,11 +141,11 @@ const SalesEntry = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 animate-fade-in">
       <div className="p-4 lg:p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}
-          <Card>
+          <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">
             <CardHeader>
               <CardTitle className="flex items-center text-2xl">
                 <Receipt className="w-6 h-6 mr-3 text-primary" />
@@ -157,7 +156,7 @@ const SalesEntry = () => {
           </Card>
 
           {/* Staff and Customer Info */}
-          <Card>
+          <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <User className="w-5 h-5 mr-2 text-accent" />
@@ -173,6 +172,7 @@ const SalesEntry = () => {
                   value={staffName}
                   onChange={(e) => setStaffName(e.target.value)}
                   required
+                  className="transition-all duration-200 focus:scale-[1.02]"
                 />
               </div>
               <div className="space-y-2">
@@ -182,13 +182,14 @@ const SalesEntry = () => {
                   placeholder="Enter customer name"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
+                  className="transition-all duration-200 focus:scale-[1.02]"
                 />
               </div>
             </CardContent>
           </Card>
 
           {/* Add Items */}
-          <Card>
+          <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">
             <CardHeader>
               <CardTitle className="flex items-center">
                 <Plus className="w-5 h-5 mr-2 text-primary" />
@@ -201,7 +202,7 @@ const SalesEntry = () => {
                   <Label htmlFor="product-select">Product</Label>
                   <select
                     id="product-select"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 transition-all duration-200 focus:scale-[1.02]"
                     value={selectedProduct}
                     onChange={(e) => setSelectedProduct(e.target.value)}
                   >
@@ -222,10 +223,11 @@ const SalesEntry = () => {
                     step="0.1"
                     value={quantity}
                     onChange={(e) => setQuantity(parseFloat(e.target.value) || 0)}
+                    className="transition-all duration-200 focus:scale-[1.02]"
                   />
                 </div>
                 <div className="flex items-end">
-                  <Button onClick={addSaleItem} className="w-full">
+                  <Button onClick={addSaleItem} className="w-full hover-scale transition-all duration-200">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Item
                   </Button>
@@ -235,14 +237,14 @@ const SalesEntry = () => {
           </Card>
 
           {/* Sale Items List */}
-          <Card>
+          <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <span className="flex items-center">
                   <ShoppingCart className="w-5 h-5 mr-2 text-accent" />
                   Sale Items
                 </span>
-                <Badge variant="secondary">
+                <Badge variant="secondary" className="animate-pulse">
                   {getTotalItems()} items
                 </Badge>
               </CardTitle>
@@ -250,10 +252,14 @@ const SalesEntry = () => {
             <CardContent>
               <div className="space-y-3">
                 {saleItems.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">No items added yet</p>
+                  <p className="text-gray-500 text-center py-8 animate-fade-in">No items added yet</p>
                 ) : (
-                  saleItems.map(item => (
-                    <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  saleItems.map((item, index) => (
+                    <div 
+                      key={item.id} 
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-all duration-300 animate-fade-in hover-scale"
+                      style={{ animationDelay: `${index * 100}ms` }}
+                    >
                       <div className="flex-1">
                         <h4 className="font-medium">{item.name}</h4>
                         <p className="text-sm text-gray-600">
@@ -266,6 +272,7 @@ const SalesEntry = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => updateItemQuantity(item.id, item.quantity - 0.5)}
+                            className="hover-scale transition-all duration-200"
                           >
                             <Minus className="w-3 h-3" />
                           </Button>
@@ -276,6 +283,7 @@ const SalesEntry = () => {
                             size="sm"
                             variant="outline"
                             onClick={() => updateItemQuantity(item.id, item.quantity + 0.5)}
+                            className="hover-scale transition-all duration-200"
                           >
                             <Plus className="w-3 h-3" />
                           </Button>
@@ -286,7 +294,7 @@ const SalesEntry = () => {
                             size="sm"
                             variant="ghost"
                             onClick={() => removeItem(item.id)}
-                            className="text-red-600 hover:text-red-800 h-auto p-0"
+                            className="text-red-600 hover:text-red-800 h-auto p-0 hover-scale transition-all duration-200"
                           >
                             Remove
                           </Button>
@@ -300,13 +308,13 @@ const SalesEntry = () => {
               {saleItems.length > 0 && (
                 <>
                   <Separator className="my-4" />
-                  <div className="flex justify-between items-center text-lg font-bold">
+                  <div className="flex justify-between items-center text-lg font-bold animate-fade-in">
                     <span>Total Amount:</span>
-                    <span className="text-primary">KSh {getTotalAmount().toLocaleString()}</span>
+                    <span className="text-primary animate-pulse">KSh {getTotalAmount().toLocaleString()}</span>
                   </div>
                   <Button 
                     onClick={saveSale}
-                    className="w-full mt-4"
+                    className="w-full mt-4 hover-scale transition-all duration-200"
                     size="lg"
                   >
                     <Save className="w-5 h-5 mr-2" />
