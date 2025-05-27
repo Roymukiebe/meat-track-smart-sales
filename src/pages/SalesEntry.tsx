@@ -5,8 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, Save, User, Receipt, ShoppingCart } from 'lucide-react';
+import { Plus, Minus, Save, User, Receipt, ShoppingCart, ArrowLeft } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 
 interface Product {
   id: string;
@@ -23,6 +24,7 @@ interface SaleItem extends Product {
 
 const SalesEntry = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [staffName, setStaffName] = useState('');
@@ -142,6 +144,28 @@ const SalesEntry = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 animate-fade-in">
+      {/* Header with Back Button */}
+      <div className="bg-white border-b border-gray-200 px-4 py-3 mb-6 animate-slide-in-right">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Button 
+              variant="ghost" 
+              onClick={() => navigate('/')}
+              className="hover-scale transition-all duration-200"
+            >
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
+            </Button>
+            <div className="flex items-center space-x-2">
+              <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
+                <span className="text-white font-bold text-xs">TMC</span>
+              </div>
+              <span className="font-bold text-lg text-gray-900">Sales Entry</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div className="p-4 lg:p-6">
         <div className="max-w-4xl mx-auto space-y-6">
           {/* Header */}

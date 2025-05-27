@@ -104,7 +104,7 @@
     @apply bg-white/50 backdrop-blur-sm border border-gray-200/50 hover:shadow-lg transition-all duration-300;
   }
 
-  /* Custom Animation Classes */
+  /* Enhanced Animation Classes */
   .animate-fade-in {
     animation: fadeIn 0.5s ease-out forwards;
   }
@@ -117,12 +117,29 @@
     animation: slideInRight 0.3s ease-out forwards;
   }
 
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+
   .hover-scale {
     @apply transition-transform duration-200 hover:scale-105;
   }
 
   .story-link {
     @apply relative inline-block after:content-[''] after:absolute after:w-full after:scale-x-0 after:h-0.5 after:bottom-0 after:left-0 after:bg-primary after:origin-bottom-right after:transition-transform after:duration-300 hover:after:scale-x-100 hover:after:origin-bottom-left;
+  }
+
+  /* Payment method specific styles */
+  .payment-card {
+    @apply bg-gradient-to-br from-blue-50 to-blue-100 border-blue-200;
+  }
+
+  .mpesa-card {
+    @apply bg-gradient-to-br from-green-50 to-green-100 border-green-200;
   }
 }
 
@@ -156,5 +173,23 @@
   to {
     opacity: 1;
     transform: translateX(0);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px rgba(var(--primary), 0.3);
+  }
+  to {
+    box-shadow: 0 0 20px rgba(var(--primary), 0.6);
   }
 }

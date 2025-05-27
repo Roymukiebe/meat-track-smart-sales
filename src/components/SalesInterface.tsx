@@ -1,12 +1,13 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, ShoppingCart, Calculator, User, Receipt } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Calculator, User, Receipt, Sparkles } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import BarcodeScanner from './BarcodeScanner';
+import PaymentOptions from './PaymentOptions';
 
 interface Product {
   id: string;
@@ -26,6 +27,7 @@ const SalesInterface = () => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [showPayment, setShowPayment] = useState(false);
 
   const products: Product[] = [
     { id: '1', name: 'Beef Steak', price: 800, category: 'Beef', unit: 'kg' },
@@ -112,13 +114,55 @@ const SalesInterface = () => {
     setCustomerName('');
   };
 
+  const handlePaymentComplete = (method: string, reference: string) => {
+    // Process the completed payment
+    console.log('Payment completed:', { method, reference, total: getTotalAmount() });
+    
+    // Reset after successful payment
+    setCart([]);
+    setCustomerName('');
+    setShowPayment(false);
+    
+    toast({
+      title: "Sale Completed Successfully!",
+      description: `Payment via ${method} - Ref: ${reference}`,
+    });
+  };
+
+  const handleProductScanned = (product: Product) => {
+    addToCart(product);
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50">
-      <div className="p-4 lg:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 relative overflow-hidden">
+      {/* Background Graphics */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-primary/5 rounded-full animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-accent/5 rounded-full animate-bounce" style={{ animationDelay: '1s' }}></div>
+        <div className="absolute bottom-20 left-1/4 w-40 h-40 bg-primary/3 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+        <div className="absolute bottom-40 right-10 w-28 h-28 bg-accent/3 rounded-full animate-bounce" style={{ animationDelay: '0.5s' }}></div>
+      </div>
+
+      <div className="relative z-10 p-4 lg:p-6">
+        {/* Enhanced Header */}
+        <div className="mb-6 text-center animate-fade-in">
+          <div className="flex items-center justify-center space-x-2 mb-2">
+            <Sparkles className="w-8 h-8 text-primary animate-pulse" />
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              Sales Interface
+            </h1>
+            <Sparkles className="w-8 h-8 text-accent animate-pulse" style={{ animationDelay: '0.5s' }} />
+          </div>
+          <p className="text-gray-600">Streamlined product selection and checkout</p>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* Products Section */}
           <div className="lg:col-span-2 space-y-6">
+            {/* Barcode Scanner */}
+            <BarcodeScanner onProductScanned={handleProductScanned} />
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
@@ -269,17 +313,25 @@ const SalesInterface = () => {
                   </div>
                   
                   <Button 
-                    onClick={processSale}
+                    onClick={() => setShowPayment(true)}
                     className="w-full"
                     size="lg"
                     disabled={cart.length === 0}
                   >
                     <Receipt className="w-5 h-5 mr-2" />
-                    Process Sale
+                    Proceed to Payment
                   </Button>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Payment Options */}
+            {showPayment && cart.length > 0 && (
+              <PaymentOptions 
+                total={getTotalAmount()}
+                onPaymentComplete={handlePaymentComplete}
+              />
+            )}
           </div>
         </div>
       </div>
