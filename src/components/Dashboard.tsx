@@ -27,10 +27,11 @@ const Dashboard = () => {
   const COLORS = ['#f97316', '#22c55e', '#3b82f6', '#eab308', '#ef4444'];
 
   const recentSales = [
-    { id: '001', customer: 'John Kamau', amount: 2500, time: '10:30 AM', items: 'Beef Steak, Chicken' },
-    { id: '002', customer: 'Mary Wanjiru', amount: 1800, time: '11:15 AM', items: 'Pork Chops' },
-    { id: '003', customer: 'Peter Mwangi', amount: 3200, time: '12:00 PM', items: 'Lamb Leg, Beef' },
-    { id: '004', customer: 'Grace Akinyi', amount: 1500, time: '12:45 PM', items: 'Chicken Breast' },
+    { id: '001', customer: 'Joseph Mwangi', amount: 2500, time: '10:30 AM', items: 'Beef Steak, Chicken' },
+    { id: '002', customer: 'Faith Wanjiku', amount: 1800, time: '11:15 AM', items: 'Pork Chops' },
+    { id: '003', customer: 'Daniel Kiprotich', amount: 3200, time: '12:00 PM', items: 'Lamb Leg, Beef' },
+    { id: '004', customer: 'Catherine Nyambura', amount: 1500, time: '12:45 PM', items: 'Chicken Breast' },
+    { id: '005', customer: 'Samuel Ochieng', amount: 2200, time: '1:15 PM', items: 'Goat Meat' },
   ];
 
   return (

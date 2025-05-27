@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -21,8 +20,8 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
 
   // Demo credentials - in real app, this would be validated against your backend
   const demoCredentials = {
-    owner: { username: 'owner', password: 'owner123' },
-    staff: { username: 'staff', password: 'staff123' }
+    owner: { username: 'peter.mutua', password: 'owner123' },
+    staff: { username: 'grace.wanjiru', password: 'staff123' }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,13 +35,13 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
     if (username === demoCredentials.owner.username && password === demoCredentials.owner.password) {
       toast({
         title: "Login Successful!",
-        description: "Welcome back, Owner",
+        description: "Welcome back, Peter Mutua (Owner)",
       });
       onLogin('owner', username);
     } else if (username === demoCredentials.staff.username && password === demoCredentials.staff.password) {
       toast({
         title: "Login Successful!",
-        description: "Welcome back, Staff Member",
+        description: "Welcome back, Grace Wanjiru (Staff)",
       });
       onLogin('staff', username);
     } else {
@@ -58,13 +57,14 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
 
   const quickLogin = (role: 'owner' | 'staff') => {
     const credentials = demoCredentials[role];
+    const displayName = role === 'owner' ? 'Peter Mutua' : 'Grace Wanjiru';
     setUsername(credentials.username);
     setPassword(credentials.password);
     
     setTimeout(() => {
       toast({
         title: "Login Successful!",
-        description: `Welcome back, ${role.charAt(0).toUpperCase() + role.slice(1)}`,
+        description: `Welcome back, ${displayName}`,
       });
       onLogin(role, credentials.username);
     }, 500);
@@ -169,8 +169,8 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
               </div>
 
               <div className="text-xs text-gray-500 text-center space-y-1">
-                <p><strong>Owner:</strong> username: owner, password: owner123</p>
-                <p><strong>Staff:</strong> username: staff, password: staff123</p>
+                <p><strong>Owner:</strong> username: peter.mutua, password: owner123</p>
+                <p><strong>Staff:</strong> username: grace.wanjiru, password: staff123</p>
               </div>
             </div>
           </CardContent>

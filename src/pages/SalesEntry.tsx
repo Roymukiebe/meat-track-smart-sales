@@ -192,7 +192,7 @@ const SalesEntry = () => {
                 <Label htmlFor="staff-name">Staff Name *</Label>
                 <Input
                   id="staff-name"
-                  placeholder="Enter your name"
+                  placeholder="Enter your name (e.g., Mary Njeri)"
                   value={staffName}
                   onChange={(e) => setStaffName(e.target.value)}
                   required
@@ -203,7 +203,7 @@ const SalesEntry = () => {
                 <Label htmlFor="customer-name">Customer Name (Optional)</Label>
                 <Input
                   id="customer-name"
-                  placeholder="Enter customer name"
+                  placeholder="Enter customer name (e.g., John Kamau)"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   className="transition-all duration-200 focus:scale-[1.02]"
