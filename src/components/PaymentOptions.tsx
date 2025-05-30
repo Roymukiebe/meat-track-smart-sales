@@ -15,18 +15,49 @@ import {
   Shield 
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
+import Receipt from './Receipt';
+import { generateReceiptNumber, downloadReceiptAsPDF, printReceipt } from '@/utils/receiptService';
+
+interface PaymentItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  total: number;
+  unit: string;
+}
 
 interface PaymentOptionsProps {
   total: number;
+  items: PaymentItem[];
+  customerName?: string;
+  staffName?: string;
   onPaymentComplete: (method: string, reference: string) => void;
 }
 
-const PaymentOptions = ({ total, onPaymentComplete }: PaymentOptionsProps) => {
+const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComplete }: PaymentOptionsProps) => {
   const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showReceipt, setShowReceipt] = useState(false);
+  const [receiptData, setReceiptData] = useState<any>(null);
+
+  const generateReceipt = (method: string, reference: string) => {
+    const receipt = {
+      receiptNumber: generateReceiptNumber(),
+      items,
+      customerName,
+      staffName,
+      paymentMethod: method,
+      paymentReference: reference,
+      total,
+      date: new Date().toLocaleString()
+    };
+    setReceiptData(receipt);
+    setShowReceipt(true);
+  };
 
   const handleMpesaPayment = async () => {
     if (!phoneNumber.match(/^254\d{9}$/)) {
@@ -40,10 +71,10 @@ const PaymentOptions = ({ total, onPaymentComplete }: PaymentOptionsProps) => {
 
     setIsProcessing(true);
     
-    // Simulate M-Pesa payment processing
     setTimeout(() => {
       const reference = `MP${Date.now()}`;
       setIsProcessing(false);
+      generateReceipt('M-Pesa', reference);
       onPaymentComplete('M-Pesa', reference);
       
       toast({
@@ -65,10 +96,10 @@ const PaymentOptions = ({ total, onPaymentComplete }: PaymentOptionsProps) => {
 
     setIsProcessing(true);
     
-    // Simulate card payment processing
     setTimeout(() => {
       const reference = `CD${Date.now()}`;
       setIsProcessing(false);
+      generateReceipt('Card', reference);
       onPaymentComplete('Card', reference);
       
       toast({
@@ -80,6 +111,7 @@ const PaymentOptions = ({ total, onPaymentComplete }: PaymentOptionsProps) => {
 
   const handleCashPayment = () => {
     const reference = `CSH${Date.now()}`;
+    generateReceipt('Cash', reference);
     onPaymentComplete('Cash', reference);
     
     toast({
@@ -87,6 +119,37 @@ const PaymentOptions = ({ total, onPaymentComplete }: PaymentOptionsProps) => {
       description: `Payment of KSh ${total.toLocaleString()} recorded as cash`,
     });
   };
+
+  const handleDownloadReceipt = () => {
+    if (receiptData) {
+      downloadReceiptAsPDF(receiptData);
+    }
+  };
+
+  const handlePrintReceipt = () => {
+    if (receiptData) {
+      printReceipt(receiptData);
+    }
+  };
+
+  if (showReceipt && receiptData) {
+    return (
+      <div className="space-y-4">
+        <Receipt
+          {...receiptData}
+          onDownload={handleDownloadReceipt}
+          onPrint={handlePrintReceipt}
+        />
+        <Button 
+          onClick={() => setShowReceipt(false)} 
+          variant="outline" 
+          className="w-full"
+        >
+          Back to Payment
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">

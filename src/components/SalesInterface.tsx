@@ -329,6 +329,16 @@ const SalesInterface = () => {
             {showPayment && cart.length > 0 && (
               <PaymentOptions 
                 total={getTotalAmount()}
+                items={cart.map(item => ({
+                  id: item.id,
+                  name: item.name,
+                  quantity: item.quantity,
+                  price: item.price,
+                  total: item.total,
+                  unit: item.unit
+                }))}
+                customerName={customerName}
+                staffName="Current User"
                 onPaymentComplete={handlePaymentComplete}
               />
             )}
