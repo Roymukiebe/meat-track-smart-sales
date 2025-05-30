@@ -1,8 +1,7 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Receipt as ReceiptIcon, Download, Print } from 'lucide-react';
+import { Receipt as ReceiptIcon, Download, Printer } from 'lucide-react';
 
 interface ReceiptItem {
   id: string;
@@ -131,7 +130,7 @@ const Receipt = ({
           )}
           {onPrint && (
             <Button onClick={onPrint} variant="outline" size="sm" className="flex-1">
-              <Print className="w-4 h-4 mr-2" />
+              <Printer className="w-4 h-4 mr-2" />
               Print
             </Button>
           )}
