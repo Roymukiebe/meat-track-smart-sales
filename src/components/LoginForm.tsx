@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -155,7 +156,6 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
                   className="flex flex-col items-center space-y-1 h-auto py-3"
                 >
                   <Badge className="bg-primary">Owner</Badge>
-                  <span className="text-xs">Full Access</span>
                 </Button>
                 
                 <Button
@@ -164,13 +164,7 @@ const LoginForm = ({ onLogin }: LoginFormProps) => {
                   className="flex flex-col items-center space-y-1 h-auto py-3"
                 >
                   <Badge className="bg-accent">Staff</Badge>
-                  <span className="text-xs">Limited Access</span>
                 </Button>
-              </div>
-
-              <div className="text-xs text-gray-500 text-center space-y-1">
-                <p><strong>Owner:</strong> username: peter.mutua, password: owner123</p>
-                <p><strong>Staff:</strong> username: grace.wanjiru, password: staff123</p>
               </div>
             </div>
           </CardContent>

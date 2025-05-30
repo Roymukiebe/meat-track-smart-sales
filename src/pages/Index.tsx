@@ -5,6 +5,7 @@ import NavigationBar from '@/components/NavigationBar';
 import Dashboard from '@/components/Dashboard';
 import SalesInterface from '@/components/SalesInterface';
 import ReportsView from '@/components/ReportsView';
+import UserManagement from '@/components/UserManagement';
 
 interface User {
   role: 'owner' | 'staff';
@@ -48,11 +49,15 @@ const Index = () => {
           </div>
         );
       case 'staff':
-        return (
+        return user?.role === 'owner' ? (
+          <div className={baseClasses}>
+            <UserManagement />
+          </div>
+        ) : (
           <div className={`${baseClasses} min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 flex items-center justify-center`}>
             <div className="text-center animate-scale-in">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Staff Management</h2>
-              <p className="text-gray-600">Staff management features coming soon...</p>
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+              <p className="text-gray-600">You don't have permission to access staff management.</p>
             </div>
           </div>
         );
