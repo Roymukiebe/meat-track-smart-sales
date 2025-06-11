@@ -9,7 +9,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Package
 } from 'lucide-react';
 
 interface NavigationBarProps {
@@ -25,6 +26,7 @@ const NavigationBar = ({ activeView, onViewChange, userRole, onLogout }: Navigat
   const menuItems = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart, roles: ['owner', 'staff'] },
     { id: 'sales', label: 'New Sale', icon: ShoppingCart, roles: ['owner', 'staff'] },
+    { id: 'inventory', label: 'Inventory', icon: Package, roles: ['owner', 'staff'] },
     { id: 'sales-entry', label: 'Sales Entry', icon: FileText, roles: ['owner', 'staff'], isLink: true, path: '/sales-entry' },
     { id: 'reports', label: 'Reports', icon: FileText, roles: ['owner'] },
     { id: 'staff', label: 'Staff Management', icon: Users, roles: ['owner'] },
