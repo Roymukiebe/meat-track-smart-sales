@@ -8,6 +8,7 @@ import ReportsView from '@/components/ReportsView';
 import UserManagement from '@/components/UserManagement';
 import Settings from '@/components/Settings';
 import InventoryManagement from '@/components/InventoryManagement';
+import { InventoryProvider } from '@/contexts/InventoryContext';
 
 interface User {
   role: 'owner' | 'staff';
@@ -100,15 +101,17 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <NavigationBar
-        activeView={activeView}
-        onViewChange={setActiveView}
-        userRole={user.role}
-        onLogout={handleLogout}
-      />
-      {renderActiveView()}
-    </div>
+    <InventoryProvider>
+      <div className="min-h-screen bg-gray-50">
+        <NavigationBar
+          activeView={activeView}
+          onViewChange={setActiveView}
+          userRole={user.role}
+          onLogout={handleLogout}
+        />
+        {renderActiveView()}
+      </div>
+    </InventoryProvider>
   );
 };
 

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useInventory } from '@/contexts/InventoryContext';
 import { 
   Package, 
   Plus, 
@@ -16,69 +17,13 @@ import {
   Filter
 } from 'lucide-react';
 
-interface InventoryItem {
-  id: string;
-  name: string;
-  category: string;
-  currentStock: number;
-  minStock: number;
-  maxStock: number;
-  unit: string;
-  costPrice: number;
-  sellingPrice: number;
-  supplier: string;
-  lastRestocked: string;
-}
-
 const InventoryManagement = () => {
   const { toast } = useToast();
+  const { inventory, addProduct, removeProduct, updateStock } = useInventory();
   
-  const [inventory, setInventory] = useState<InventoryItem[]>([
-    {
-      id: '1',
-      name: 'Beef Steak',
-      category: 'Beef',
-      currentStock: 25,
-      minStock: 10,
-      maxStock: 100,
-      unit: 'kg',
-      costPrice: 650,
-      sellingPrice: 800,
-      supplier: 'Premium Meat Supplies',
-      lastRestocked: '2024-01-10'
-    },
-    {
-      id: '2',
-      name: 'Chicken Breast',
-      category: 'Chicken',
-      currentStock: 5,
-      minStock: 15,
-      maxStock: 80,
-      unit: 'kg',
-      costPrice: 350,
-      sellingPrice: 450,
-      supplier: 'Poultry Direct',
-      lastRestocked: '2024-01-08'
-    },
-    {
-      id: '3',
-      name: 'Ground Beef',
-      category: 'Beef',
-      currentStock: 30,
-      minStock: 20,
-      maxStock: 60,
-      unit: 'kg',
-      costPrice: 450,
-      sellingPrice: 550,
-      supplier: 'Premium Meat Supplies',
-      lastRestocked: '2024-01-12'
-    }
-  ]);
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [editingItem, setEditingItem] = useState<InventoryItem | null>(null);
 
   const [newItem, setNewItem] = useState({
     name: '',
@@ -88,7 +33,7 @@ const InventoryManagement = () => {
     maxStock: 0,
     unit: 'kg',
     costPrice: 0,
-    sellingPrice: 0,
+    price: 0,
     supplier: ''
   });
 
@@ -103,15 +48,18 @@ const InventoryManagement = () => {
 
   const lowStockItems = inventory.filter(item => item.currentStock <= item.minStock);
 
-  const getStockStatus = (item: InventoryItem) => {
+  const getStockStatus = (item: any) => {
+    if (item.currentStock <= 0) return 'outofstock';
     if (item.currentStock <= item.minStock) return 'low';
     if (item.currentStock >= item.maxStock * 0.8) return 'high';
     return 'normal';
   };
 
-  const getStockBadge = (item: InventoryItem) => {
+  const getStockBadge = (item: any) => {
     const status = getStockStatus(item);
     switch (status) {
+      case 'outofstock':
+        return <Badge variant="destructive">Out of Stock</Badge>;
       case 'low':
         return <Badge variant="destructive">Low Stock</Badge>;
       case 'high':
@@ -124,7 +72,7 @@ const InventoryManagement = () => {
   const handleAddItem = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!newItem.name || !newItem.category || newItem.sellingPrice <= 0) {
+    if (!newItem.name || !newItem.category || newItem.price <= 0) {
       toast({
         title: "Error",
         description: "Please fill in all required fields",
@@ -133,13 +81,7 @@ const InventoryManagement = () => {
       return;
     }
 
-    const item: InventoryItem = {
-      id: Date.now().toString(),
-      ...newItem,
-      lastRestocked: new Date().toISOString().split('T')[0]
-    };
-
-    setInventory([...inventory, item]);
+    addProduct(newItem);
     setNewItem({
       name: '',
       category: '',
@@ -148,34 +90,36 @@ const InventoryManagement = () => {
       maxStock: 0,
       unit: 'kg',
       costPrice: 0,
-      sellingPrice: 0,
+      price: 0,
       supplier: ''
     });
     setShowAddForm(false);
 
     toast({
       title: "Item Added",
-      description: `${item.name} has been added to inventory`,
+      description: `${newItem.name} has been added to inventory`,
     });
   };
 
   const handleDeleteItem = (id: string, name: string) => {
-    setInventory(inventory.filter(item => item.id !== id));
+    removeProduct(id);
     toast({
       title: "Item Removed",
       description: `${name} has been removed from inventory`,
     });
   };
 
-  const updateStock = (id: string, newStock: number) => {
-    setInventory(inventory.map(item =>
-      item.id === id ? { ...item, currentStock: newStock } : item
-    ));
-    
-    toast({
-      title: "Stock Updated",
-      description: "Stock level has been updated successfully",
-    });
+  const handleStockUpdate = (id: string, newStock: number) => {
+    const product = inventory.find(p => p.id === id);
+    if (product) {
+      const difference = newStock - product.currentStock;
+      updateStock(id, -difference); // Negative to add stock
+      
+      toast({
+        title: "Stock Updated",
+        description: "Stock level has been updated successfully",
+      });
+    }
   };
 
   return (
@@ -207,7 +151,7 @@ const InventoryManagement = () => {
               <div className="flex items-center space-x-2">
                 <AlertTriangle className="w-5 h-5 text-orange-600" />
                 <span className="font-medium text-orange-800">
-                  {lowStockItems.length} item(s) running low on stock
+                  {lowStockItems.length} item(s) running low on stock: {lowStockItems.map(item => item.name).join(', ')}
                 </span>
               </div>
             </CardContent>
@@ -334,8 +278,8 @@ const InventoryManagement = () => {
                     <Input
                       id="sellingPrice"
                       type="number"
-                      value={newItem.sellingPrice}
-                      onChange={(e) => setNewItem({...newItem, sellingPrice: Number(e.target.value)})}
+                      value={newItem.price}
+                      onChange={(e) => setNewItem({...newItem, price: Number(e.target.value)})}
                       required
                     />
                   </div>
@@ -384,9 +328,9 @@ const InventoryManagement = () => {
                       {getStockBadge(item)}
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
-                      <div>Stock: {item.currentStock} {item.unit}</div>
+                      <div>Stock: <span className={`font-bold ${item.currentStock <= item.minStock ? 'text-red-600' : 'text-green-600'}`}>{item.currentStock} {item.unit}</span></div>
                       <div>Min: {item.minStock} {item.unit}</div>
-                      <div>Price: KSh {item.sellingPrice}/{item.unit}</div>
+                      <div>Price: KSh {item.price}/{item.unit}</div>
                       <div>Supplier: {item.supplier}</div>
                     </div>
                   </div>
@@ -396,8 +340,9 @@ const InventoryManagement = () => {
                       <Input
                         type="number"
                         value={item.currentStock}
-                        onChange={(e) => updateStock(item.id, Number(e.target.value))}
+                        onChange={(e) => handleStockUpdate(item.id, Number(e.target.value))}
                         className="w-20 h-8"
+                        min="0"
                       />
                       <span className="text-sm text-gray-500">{item.unit}</span>
                     </div>

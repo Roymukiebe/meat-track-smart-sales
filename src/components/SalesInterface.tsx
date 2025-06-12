@@ -1,56 +1,63 @@
+
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, ShoppingCart, Calculator, User, Receipt, Sparkles } from 'lucide-react';
+import { Plus, Minus, ShoppingCart, Calculator, User, Receipt, Sparkles, AlertTriangle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import BarcodeScanner from './BarcodeScanner';
 import PaymentOptions from './PaymentOptions';
+import { useInventory } from '@/contexts/InventoryContext';
 
-interface Product {
+interface CartItem {
   id: string;
   name: string;
   price: number;
   category: string;
   unit: string;
-}
-
-interface CartItem extends Product {
   quantity: number;
   total: number;
 }
 
 const SalesInterface = () => {
   const { toast } = useToast();
+  const { inventory, processSale } = useInventory();
   const [cart, setCart] = useState<CartItem[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [showPayment, setShowPayment] = useState(false);
 
-  const products: Product[] = [
-    { id: '1', name: 'Beef Steak', price: 800, category: 'Beef', unit: 'kg' },
-    { id: '2', name: 'Beef Ribs', price: 650, category: 'Beef', unit: 'kg' },
-    { id: '3', name: 'Ground Beef', price: 550, category: 'Beef', unit: 'kg' },
-    { id: '4', name: 'Chicken Breast', price: 450, category: 'Chicken', unit: 'kg' },
-    { id: '5', name: 'Chicken Thighs', price: 350, category: 'Chicken', unit: 'kg' },
-    { id: '6', name: 'Whole Chicken', price: 400, category: 'Chicken', unit: 'kg' },
-    { id: '7', name: 'Pork Chops', price: 700, category: 'Pork', unit: 'kg' },
-    { id: '8', name: 'Pork Ribs', price: 750, category: 'Pork', unit: 'kg' },
-    { id: '9', name: 'Lamb Leg', price: 900, category: 'Lamb', unit: 'kg' },
-    { id: '10', name: 'Goat Meat', price: 600, category: 'Goat', unit: 'kg' },
-  ];
+  const categories = [...new Set(inventory.map(p => p.category))];
 
-  const categories = [...new Set(products.map(p => p.category))];
-
-  const filteredProducts = products.filter(product =>
+  const filteredProducts = inventory.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     product.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: any) => {
+    // Check if there's enough stock
+    if (product.currentStock <= 0) {
+      toast({
+        title: "Out of Stock",
+        description: `${product.name} is currently out of stock`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     const existingItem = cart.find(item => item.id === product.id);
+    const currentQuantityInCart = existingItem ? existingItem.quantity : 0;
+    
+    if (currentQuantityInCart >= product.currentStock) {
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${product.currentStock} ${product.unit} available for ${product.name}`,
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (existingItem) {
       setCart(cart.map(item =>
@@ -59,7 +66,15 @@ const SalesInterface = () => {
           : item
       ));
     } else {
-      setCart([...cart, { ...product, quantity: 1, total: product.price }]);
+      setCart([...cart, { 
+        id: product.id,
+        name: product.name,
+        price: product.price,
+        category: product.category,
+        unit: product.unit,
+        quantity: 1, 
+        total: product.price 
+      }]);
     }
     
     toast({
@@ -71,6 +86,17 @@ const SalesInterface = () => {
   const updateQuantity = (id: string, newQuantity: number) => {
     if (newQuantity <= 0) {
       setCart(cart.filter(item => item.id !== id));
+      return;
+    }
+
+    // Check stock availability
+    const product = inventory.find(p => p.id === id);
+    if (product && newQuantity > product.currentStock) {
+      toast({
+        title: "Insufficient Stock",
+        description: `Only ${product.currentStock} ${product.unit} available`,
+        variant: "destructive",
+      });
       return;
     }
     
@@ -93,29 +119,10 @@ const SalesInterface = () => {
     return cart.reduce((sum, item) => sum + item.quantity, 0);
   };
 
-  const processSale = () => {
-    if (cart.length === 0) {
-      toast({
-        title: "Cart is empty",
-        description: "Please add items to cart before processing sale",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Here you would integrate with your backend API
-    toast({
-      title: "Sale Processed Successfully!",
-      description: `Total: KSh ${getTotalAmount().toLocaleString()} for ${getTotalItems()} items`,
-    });
-
-    // Reset after successful sale
-    setCart([]);
-    setCustomerName('');
-  };
-
   const handlePaymentComplete = (method: string, reference: string) => {
-    // Process the completed payment
+    // Process the sale and update inventory
+    processSale(cart);
+    
     console.log('Payment completed:', { method, reference, total: getTotalAmount() });
     
     // Reset after successful payment
@@ -125,12 +132,23 @@ const SalesInterface = () => {
     
     toast({
       title: "Sale Completed Successfully!",
-      description: `Payment via ${method} - Ref: ${reference}`,
+      description: `Payment via ${method} - Ref: ${reference}. Stock levels updated.`,
     });
   };
 
-  const handleProductScanned = (product: Product) => {
+  const handleProductScanned = (product: any) => {
     addToCart(product);
+  };
+
+  const getStockBadge = (currentStock: number, minStock: number) => {
+    if (currentStock <= 0) {
+      return <Badge variant="destructive">Out of Stock</Badge>;
+    } else if (currentStock <= minStock) {
+      return <Badge variant="destructive">Low Stock</Badge>;
+    } else if (currentStock <= minStock * 2) {
+      return <Badge className="bg-orange-500 hover:bg-orange-600">Running Low</Badge>;
+    }
+    return <Badge variant="secondary">In Stock</Badge>;
   };
 
   return (
@@ -210,13 +228,29 @@ const SalesInterface = () => {
                         <p className="text-2xl font-bold text-primary mb-2">
                           KSh {product.price}/{product.unit}
                         </p>
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <span className="text-sm font-medium">Stock:</span>
+                            <span className={`text-sm font-bold ${product.currentStock <= product.minStock ? 'text-red-600' : 'text-green-600'}`}>
+                              {product.currentStock} {product.unit}
+                            </span>
+                          </div>
+                          {getStockBadge(product.currentStock, product.minStock)}
+                        </div>
+                        {product.currentStock <= product.minStock && product.currentStock > 0 && (
+                          <div className="flex items-center space-x-1 mb-2 text-orange-600 text-xs">
+                            <AlertTriangle className="w-3 h-3" />
+                            <span>Low stock warning!</span>
+                          </div>
+                        )}
                         <Button 
                           onClick={() => addToCart(product)}
                           className="w-full"
                           size="sm"
+                          disabled={product.currentStock <= 0}
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Add to Cart
+                          {product.currentStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
                         </Button>
                       </CardContent>
                     </Card>
@@ -261,42 +295,49 @@ const SalesInterface = () => {
                   {cart.length === 0 ? (
                     <p className="text-gray-500 text-center py-4">Cart is empty</p>
                   ) : (
-                    cart.map(item => (
-                      <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div className="flex-1">
-                          <h4 className="font-medium text-sm">{item.name}</h4>
-                          <p className="text-xs text-gray-600">KSh {item.price}/{item.unit}</p>
+                    cart.map(item => {
+                      const product = inventory.find(p => p.id === item.id);
+                      return (
+                        <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                          <div className="flex-1">
+                            <h4 className="font-medium text-sm">{item.name}</h4>
+                            <p className="text-xs text-gray-600">KSh {item.price}/{item.unit}</p>
+                            <p className="text-xs text-gray-500">
+                              Available: {product ? product.currentStock : 0} {item.unit}
+                            </p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="w-8 text-center text-sm">{item.quantity}</span>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                              disabled={product ? item.quantity >= product.currentStock : true}
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                          <div className="ml-4 text-right">
+                            <p className="font-bold text-sm">KSh {item.total.toLocaleString()}</p>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-red-600 hover:text-red-800 h-auto p-0"
+                            >
+                              Remove
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          >
-                            <Minus className="w-3 h-3" />
-                          </Button>
-                          <span className="w-8 text-center text-sm">{item.quantity}</span>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          >
-                            <Plus className="w-3 h-3" />
-                          </Button>
-                        </div>
-                        <div className="ml-4 text-right">
-                          <p className="font-bold text-sm">KSh {item.total.toLocaleString()}</p>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => removeFromCart(item.id)}
-                            className="text-red-600 hover:text-red-800 h-auto p-0"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      </div>
-                    ))
+                      );
+                    })
                   )}
                 </div>
 
