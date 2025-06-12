@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 interface Product {
@@ -15,18 +14,37 @@ interface Product {
   lastRestocked: string;
 }
 
-interface CartItem extends Product {
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  category: string;
+  unit: string;
   quantity: number;
   total: number;
 }
 
+interface SaleRecord {
+  id: string;
+  receiptNumber: string;
+  items: CartItem[];
+  customerName?: string;
+  staffName?: string;
+  paymentMethod: string;
+  paymentReference: string;
+  total: number;
+  date: string;
+  timestamp: number;
+}
+
 interface InventoryContextType {
   inventory: Product[];
+  salesHistory: SaleRecord[];
   updateStock: (productId: string, quantityUsed: number) => void;
   addProduct: (product: Omit<Product, 'id' | 'lastRestocked'>) => void;
   removeProduct: (productId: string) => void;
   getProduct: (productId: string) => Product | undefined;
-  processSale: (cartItems: CartItem[]) => void;
+  processSale: (cartItems: CartItem[], paymentMethod: string, paymentReference: string, customerName?: string, staffName?: string) => string;
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
@@ -177,6 +195,8 @@ export const InventoryProvider: React.FC<InventoryProviderProps> = ({ children }
     }
   ]);
 
+  const [salesHistory, setSalesHistory] = useState<SaleRecord[]>([]);
+
   const updateStock = (productId: string, quantityUsed: number) => {
     setInventory(prev => prev.map(product => 
       product.id === productId 
@@ -202,15 +222,44 @@ export const InventoryProvider: React.FC<InventoryProviderProps> = ({ children }
     return inventory.find(product => product.id === productId);
   };
 
-  const processSale = (cartItems: CartItem[]) => {
+  const processSale = (cartItems: CartItem[], paymentMethod: string, paymentReference: string, customerName?: string, staffName?: string): string => {
+    // Generate receipt number
+    const date = new Date();
+    const year = date.getFullYear().toString().substr(-2);
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const time = Date.now().toString().substr(-6);
+    const receiptNumber = `TMC${year}${month}${day}${time}`;
+
+    // Update stock levels
     cartItems.forEach(item => {
       updateStock(item.id, item.quantity);
     });
+
+    // Create sale record
+    const saleRecord: SaleRecord = {
+      id: Date.now().toString(),
+      receiptNumber,
+      items: cartItems,
+      customerName,
+      staffName,
+      paymentMethod,
+      paymentReference,
+      total: cartItems.reduce((sum, item) => sum + item.total, 0),
+      date: new Date().toLocaleDateString(),
+      timestamp: Date.now()
+    };
+
+    // Add to sales history
+    setSalesHistory(prev => [saleRecord, ...prev]);
+
+    return receiptNumber;
   };
 
   return (
     <InventoryContext.Provider value={{
       inventory,
+      salesHistory,
       updateStock,
       addProduct,
       removeProduct,

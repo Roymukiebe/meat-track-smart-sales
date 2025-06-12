@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -121,9 +120,9 @@ const SalesInterface = () => {
 
   const handlePaymentComplete = (method: string, reference: string) => {
     // Process the sale and update inventory
-    processSale(cart);
+    const receiptNumber = processSale(cart, method, reference, customerName, "Current User");
     
-    console.log('Payment completed:', { method, reference, total: getTotalAmount() });
+    console.log('Payment completed:', { method, reference, total: getTotalAmount(), receiptNumber });
     
     // Reset after successful payment
     setCart([]);
@@ -132,7 +131,7 @@ const SalesInterface = () => {
     
     toast({
       title: "Sale Completed Successfully!",
-      description: `Payment via ${method} - Ref: ${reference}. Stock levels updated.`,
+      description: `Payment via ${method} - Receipt: ${receiptNumber}. Stock levels updated.`,
     });
   };
 

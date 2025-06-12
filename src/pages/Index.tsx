@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import LoginForm from '@/components/LoginForm';
 import NavigationBar from '@/components/NavigationBar';
@@ -8,6 +7,7 @@ import ReportsView from '@/components/ReportsView';
 import UserManagement from '@/components/UserManagement';
 import Settings from '@/components/Settings';
 import InventoryManagement from '@/components/InventoryManagement';
+import ReceiptsHistory from '@/components/ReceiptsHistory';
 import { InventoryProvider } from '@/contexts/InventoryContext';
 
 interface User {
@@ -49,6 +49,12 @@ const Index = () => {
         return (
           <div className={baseClasses}>
             <InventoryManagement />
+          </div>
+        );
+      case 'receipts':
+        return (
+          <div className={baseClasses}>
+            <ReceiptsHistory />
           </div>
         );
       case 'reports':
