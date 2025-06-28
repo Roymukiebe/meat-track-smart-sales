@@ -1,7 +1,8 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Receipt as ReceiptIcon, Download, Printer } from 'lucide-react';
+import { FileText, Download, Printer } from 'lucide-react';
 
 interface ReceiptItem {
   id: string;
@@ -53,7 +54,7 @@ const Receipt = ({
         {/* Receipt Header */}
         <div className="text-center">
           <h2 className="font-bold text-lg flex items-center justify-center">
-            <ReceiptIcon className="w-5 h-5 mr-2" />
+            <FileText className="w-5 h-5 mr-2" />
             SALES RECEIPT
           </h2>
           <p className="text-sm text-gray-600">Receipt No: {receiptNumber}</p>

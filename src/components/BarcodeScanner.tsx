@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Scan, Package, CheckCircle, AlertCircle } from 'lucide-react';
+import { ScanLine, Package, CheckCircle, AlertCircle } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 
 interface Product {
@@ -84,7 +84,7 @@ const BarcodeScanner = ({ onProductScanned }: BarcodeScannerProps) => {
     <Card className="hover:shadow-lg transition-all duration-300 animate-scale-in">
       <CardHeader>
         <CardTitle className="flex items-center">
-          <Scan className="w-5 h-5 mr-2 text-primary" />
+          <ScanLine className="w-5 h-5 mr-2 text-primary" />
           Barcode Scanner
         </CardTitle>
       </CardHeader>
@@ -101,7 +101,7 @@ const BarcodeScanner = ({ onProductScanned }: BarcodeScannerProps) => {
             />
           </div>
           <Button onClick={startScanning} variant="outline" className="hover-scale">
-            <Scan className="w-4 h-4" />
+            <ScanLine className="w-4 h-4" />
           </Button>
           <Button onClick={handleScan} className="hover-scale">
             <CheckCircle className="w-4 h-4 mr-2" />
