@@ -1,13 +1,13 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Plus, Minus, ShoppingCart, Calculator, User, Receipt, Sparkles, AlertTriangle } from 'lucide-react';
+import { ShoppingCart, Sparkles } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import BarcodeScanner from './BarcodeScanner';
 import PaymentOptions from './PaymentOptions';
+import ProductCard from './sales/ProductCard';
+import CartItem from './sales/CartItem';
+import ProductFilter from './sales/ProductFilter';
+import CartSummary from './sales/CartSummary';
 import { useInventory } from '@/contexts/InventoryContext';
 
 interface CartItem {
@@ -139,17 +139,6 @@ const SalesInterface = () => {
     addToCart(product);
   };
 
-  const getStockBadge = (currentStock: number, minStock: number) => {
-    if (currentStock <= 0) {
-      return <Badge variant="destructive">Out of Stock</Badge>;
-    } else if (currentStock <= minStock) {
-      return <Badge variant="destructive">Low Stock</Badge>;
-    } else if (currentStock <= minStock * 2) {
-      return <Badge className="bg-orange-500 hover:bg-orange-600">Running Low</Badge>;
-    }
-    return <Badge variant="secondary">In Stock</Badge>;
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-green-50 relative overflow-hidden">
       {/* Background Graphics */}
@@ -186,73 +175,21 @@ const SalesInterface = () => {
                   <ShoppingCart className="w-5 h-5 mr-2 text-primary" />
                   Product Selection
                 </CardTitle>
-                <Input
-                  placeholder="Search products..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="mt-4"
+                <ProductFilter 
+                  searchTerm={searchTerm}
+                  onSearchChange={setSearchTerm}
+                  categories={categories}
                 />
               </CardHeader>
               <CardContent>
-                {/* Category Filter */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <Button
-                    variant={searchTerm === '' ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setSearchTerm('')}
-                  >
-                    All
-                  </Button>
-                  {categories.map(category => (
-                    <Button
-                      key={category}
-                      variant={searchTerm === category ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setSearchTerm(category)}
-                    >
-                      {category}
-                    </Button>
-                  ))}
-                </div>
-
                 {/* Products Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
                   {filteredProducts.map(product => (
-                    <Card key={product.id} className="sales-card cursor-pointer hover:shadow-md transition-all">
-                      <CardContent className="p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <h3 className="font-semibold text-gray-900">{product.name}</h3>
-                          <Badge variant="secondary">{product.category}</Badge>
-                        </div>
-                        <p className="text-2xl font-bold text-primary mb-2">
-                          KSh {product.price}/{product.unit}
-                        </p>
-                        <div className="flex items-center justify-between mb-3">
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm font-medium">Stock:</span>
-                            <span className={`text-sm font-bold ${product.currentStock <= product.minStock ? 'text-red-600' : 'text-green-600'}`}>
-                              {product.currentStock} {product.unit}
-                            </span>
-                          </div>
-                          {getStockBadge(product.currentStock, product.minStock)}
-                        </div>
-                        {product.currentStock <= product.minStock && product.currentStock > 0 && (
-                          <div className="flex items-center space-x-1 mb-2 text-orange-600 text-xs">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>Low stock warning!</span>
-                          </div>
-                        )}
-                        <Button 
-                          onClick={() => addToCart(product)}
-                          className="w-full"
-                          size="sm"
-                          disabled={product.currentStock <= 0}
-                        >
-                          <Plus className="w-4 h-4 mr-2" />
-                          {product.currentStock <= 0 ? 'Out of Stock' : 'Add to Cart'}
-                        </Button>
-                      </CardContent>
-                    </Card>
+                    <ProductCard 
+                      key={product.id} 
+                      product={product} 
+                      onAddToCart={addToCart}
+                    />
                   ))}
                 </div>
               </CardContent>
@@ -261,109 +198,30 @@ const SalesInterface = () => {
 
           {/* Cart Section */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center justify-between">
-                  <span className="flex items-center">
-                    <Receipt className="w-5 h-5 mr-2 text-accent" />
-                    Current Sale
-                  </span>
-                  <Badge variant="secondary">
-                    {getTotalItems()} items
-                  </Badge>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Customer Info */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium flex items-center">
-                    <User className="w-4 h-4 mr-2" />
-                    Customer Name (Optional)
-                  </label>
-                  <Input
-                    placeholder="Enter customer name"
-                    value={customerName}
-                    onChange={(e) => setCustomerName(e.target.value)}
-                  />
-                </div>
-
-                <Separator />
-
-                {/* Cart Items */}
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {cart.length === 0 ? (
-                    <p className="text-gray-500 text-center py-4">Cart is empty</p>
-                  ) : (
-                    cart.map(item => {
-                      const product = inventory.find(p => p.id === item.id);
-                      return (
-                        <div key={item.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-sm">{item.name}</h4>
-                            <p className="text-xs text-gray-600">KSh {item.price}/{item.unit}</p>
-                            <p className="text-xs text-gray-500">
-                              Available: {product ? product.currentStock : 0} {item.unit}
-                            </p>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                            >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="w-8 text-center text-sm">{item.quantity}</span>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                              disabled={product ? item.quantity >= product.currentStock : true}
-                            >
-                              <Plus className="w-3 h-3" />
-                            </Button>
-                          </div>
-                          <div className="ml-4 text-right">
-                            <p className="font-bold text-sm">KSh {item.total.toLocaleString()}</p>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => removeFromCart(item.id)}
-                              className="text-red-600 hover:text-red-800 h-auto p-0"
-                            >
-                              Remove
-                            </Button>
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Total */}
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center text-lg font-bold">
-                    <span className="flex items-center">
-                      <Calculator className="w-5 h-5 mr-2" />
-                      Total Amount:
-                    </span>
-                    <span className="text-primary">KSh {getTotalAmount().toLocaleString()}</span>
-                  </div>
-                  
-                  <Button 
-                    onClick={() => setShowPayment(true)}
-                    className="w-full"
-                    size="lg"
-                    disabled={cart.length === 0}
-                  >
-                    <Receipt className="w-5 h-5 mr-2" />
-                    Proceed to Payment
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <CartSummary
+              customerName={customerName}
+              onCustomerNameChange={setCustomerName}
+              totalItems={getTotalItems()}
+              totalAmount={getTotalAmount()}
+              onProceedToPayment={() => setShowPayment(true)}
+            >
+              {cart.length === 0 ? (
+                <p className="text-gray-500 text-center py-4">Cart is empty</p>
+              ) : (
+                cart.map(item => {
+                  const product = inventory.find(p => p.id === item.id);
+                  return (
+                    <CartItem
+                      key={item.id}
+                      item={item}
+                      availableStock={product ? product.currentStock : 0}
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeFromCart}
+                    />
+                  );
+                })
+              )}
+            </CartSummary>
 
             {/* Payment Options */}
             {showPayment && cart.length > 0 && (
