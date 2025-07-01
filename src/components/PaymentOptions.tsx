@@ -12,7 +12,9 @@ import {
   Banknote, 
   CheckCircle, 
   Clock, 
-  Shield 
+  Shield,
+  XCircle,
+  AlertTriangle
 } from 'lucide-react';
 import { useToast } from "@/hooks/use-toast";
 import Receipt from './Receipt';
@@ -39,12 +41,14 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
   const { toast } = useToast();
   const [selectedMethod, setSelectedMethod] = useState<string>('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [mpesaPin, setMpesaPin] = useState('');
   const [cardNumber, setCardNumber] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
 
-  const generateReceipt = (method: string, reference: string) => {
+  const generateReceipt = (method: string, reference: string, isSuccessful: boolean = true) => {
     const receipt = {
       receiptNumber: generateReceiptNumber(),
       items,
@@ -53,7 +57,9 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
       paymentMethod: method,
       paymentReference: reference,
       total,
-      date: new Date().toLocaleString()
+      date: new Date().toLocaleString(),
+      isSuccessful,
+      errorMessage: isSuccessful ? undefined : 'Transaction failed. Please try again.'
     };
     setReceiptData(receipt);
     setShowReceipt(true);
@@ -69,18 +75,43 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
       return;
     }
 
-    setIsProcessing(true);
-    
-    setTimeout(() => {
-      const reference = `MP${Date.now()}`;
-      setIsProcessing(false);
-      generateReceipt('M-Pesa', reference);
-      onPaymentComplete('M-Pesa', reference);
-      
+    setShowPinPrompt(true);
+  };
+
+  const processMpesaPayment = async () => {
+    if (!mpesaPin || mpesaPin.length !== 4) {
       toast({
-        title: "M-Pesa Payment Successful!",
-        description: `Payment of KSh ${total.toLocaleString()} completed. Ref: ${reference}`,
+        title: "Invalid PIN",
+        description: "Please enter your 4-digit M-Pesa PIN",
+        variant: "destructive",
       });
+      return;
+    }
+
+    setIsProcessing(true);
+    setShowPinPrompt(false);
+    
+    // Simulate payment processing with random success/failure
+    setTimeout(() => {
+      const isSuccessful = Math.random() > 0.2; // 80% success rate for demo
+      const reference = `MP${Date.now()}`;
+      
+      setIsProcessing(false);
+      generateReceipt('M-Pesa', reference, isSuccessful);
+      
+      if (isSuccessful) {
+        onPaymentComplete('M-Pesa', reference);
+        toast({
+          title: "M-Pesa Payment Successful!",
+          description: `Payment of KSh ${total.toLocaleString()} completed. Ref: ${reference}`,
+        });
+      } else {
+        toast({
+          title: "M-Pesa Payment Failed",
+          description: "Transaction could not be completed. Please try again.",
+          variant: "destructive",
+        });
+      }
     }, 3000);
   };
 
@@ -97,21 +128,31 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
     setIsProcessing(true);
     
     setTimeout(() => {
+      const isSuccessful = Math.random() > 0.15; // 85% success rate for demo
       const reference = `CD${Date.now()}`;
-      setIsProcessing(false);
-      generateReceipt('Card', reference);
-      onPaymentComplete('Card', reference);
       
-      toast({
-        title: "Card Payment Successful!",
-        description: `Payment of KSh ${total.toLocaleString()} completed. Ref: ${reference}`,
-      });
+      setIsProcessing(false);
+      generateReceipt('Card', reference, isSuccessful);
+      
+      if (isSuccessful) {
+        onPaymentComplete('Card', reference);
+        toast({
+          title: "Card Payment Successful!",
+          description: `Payment of KSh ${total.toLocaleString()} completed. Ref: ${reference}`,
+        });
+      } else {
+        toast({
+          title: "Card Payment Failed",
+          description: "Transaction declined. Please check your card details.",
+          variant: "destructive",
+        });
+      }
     }, 2000);
   };
 
   const handleCashPayment = () => {
     const reference = `CSH${Date.now()}`;
-    generateReceipt('Cash', reference);
+    generateReceipt('Cash', reference, true);
     onPaymentComplete('Cash', reference);
     
     toast({
@@ -148,6 +189,78 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
           Back to Payment
         </Button>
       </div>
+    );
+  }
+
+  // M-Pesa PIN Prompt Modal
+  if (showPinPrompt) {
+    return (
+      <Card className="hover:shadow-lg transition-all duration-300">
+        <CardHeader className="text-center">
+          <CardTitle className="flex items-center justify-center space-x-2">
+            <Smartphone className="w-5 h-5 text-green-600" />
+            <span>Enter M-Pesa PIN</span>
+          </CardTitle>
+          <p className="text-sm text-gray-600">
+            Enter your 4-digit M-Pesa PIN to complete the transaction
+          </p>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium">Phone Number:</span>
+              <span className="text-sm">{phoneNumber}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Amount:</span>
+              <span className="text-sm font-bold">KSh {total.toLocaleString()}</span>
+            </div>
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="mpesa-pin">M-Pesa PIN</Label>
+            <Input
+              id="mpesa-pin"
+              type="password"
+              placeholder="Enter 4-digit PIN"
+              value={mpesaPin}
+              onChange={(e) => setMpesaPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+              maxLength={4}
+              className="text-center text-lg tracking-widest"
+            />
+          </div>
+
+          <div className="flex space-x-2">
+            <Button 
+              onClick={() => {
+                setShowPinPrompt(false);
+                setMpesaPin('');
+              }}
+              variant="outline" 
+              className="flex-1"
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={processMpesaPayment}
+              disabled={isProcessing || mpesaPin.length !== 4}
+              className="flex-1"
+            >
+              {isProcessing ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Confirm Payment
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 
@@ -196,20 +309,11 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
               />
               <Button 
                 onClick={handleMpesaPayment}
-                disabled={isProcessing}
+                disabled={!phoneNumber}
                 className="w-full hover-scale"
               >
-                {isProcessing ? (
-                  <>
-                    <Clock className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-4 h-4 mr-2" />
-                    Pay with M-Pesa
-                  </>
-                )}
+                <Smartphone className="w-4 h-4 mr-2" />
+                Proceed to PIN Entry
               </Button>
             </div>
           )}
