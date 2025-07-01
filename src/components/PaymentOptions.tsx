@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +18,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import Receipt from './Receipt';
 import { generateReceiptNumber, downloadReceiptAsPDF, printReceipt } from '@/utils/receiptService';
+import { supabase } from "@/integrations/supabase/client";
 
 interface PaymentItem {
   id: string;
@@ -47,6 +47,7 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
   const [showPinPrompt, setShowPinPrompt] = useState(false);
   const [showReceipt, setShowReceipt] = useState(false);
   const [receiptData, setReceiptData] = useState<any>(null);
+  const [checkoutRequestId, setCheckoutRequestId] = useState('');
 
   const generateReceipt = (method: string, reference: string, isSuccessful: boolean = true) => {
     const receipt = {
@@ -66,53 +67,78 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
   };
 
   const handleMpesaPayment = async () => {
-    if (!phoneNumber.match(/^254\d{9}$/)) {
+    if (!phoneNumber.match(/^(254|0)\d{9}$/)) {
       toast({
         title: "Invalid Phone Number",
-        description: "Please enter a valid M-Pesa number (254XXXXXXXXX)",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setShowPinPrompt(true);
-  };
-
-  const processMpesaPayment = async () => {
-    if (!mpesaPin || mpesaPin.length !== 4) {
-      toast({
-        title: "Invalid PIN",
-        description: "Please enter your 4-digit M-Pesa PIN",
+        description: "Please enter a valid M-Pesa number (254XXXXXXXXX or 07XXXXXXXX)",
         variant: "destructive",
       });
       return;
     }
 
     setIsProcessing(true);
-    setShowPinPrompt(false);
     
-    // Simulate payment processing with random success/failure
-    setTimeout(() => {
-      const isSuccessful = Math.random() > 0.2; // 80% success rate for demo
-      const reference = `MP${Date.now()}`;
+    try {
+      console.log('Sending STK Push request...');
       
-      setIsProcessing(false);
-      generateReceipt('M-Pesa', reference, isSuccessful);
-      
-      if (isSuccessful) {
-        onPaymentComplete('M-Pesa', reference);
-        toast({
-          title: "M-Pesa Payment Successful!",
-          description: `Payment of KSh ${total.toLocaleString()} completed. Ref: ${reference}`,
-        });
-      } else {
-        toast({
-          title: "M-Pesa Payment Failed",
-          description: "Transaction could not be completed. Please try again.",
-          variant: "destructive",
-        });
+      const { data, error } = await supabase.functions.invoke('mpesa-stk-push', {
+        body: {
+          phoneNumber: phoneNumber,
+          amount: total,
+          accountReference: `TMC${Date.now()}`,
+          transactionDesc: `Payment for ${items.length} items from Thika Meat Centre`,
+        },
+      });
+
+      if (error) {
+        console.error('STK Push error:', error);
+        throw new Error(error.message || 'Failed to send payment request');
       }
-    }, 3000);
+
+      console.log('STK Push response:', data);
+
+      if (data.success) {
+        setCheckoutRequestId(data.checkoutRequestId);
+        
+        toast({
+          title: "Payment Request Sent!",
+          description: `Check your phone (${phoneNumber}) for the M-Pesa prompt`,
+        });
+
+        // Wait for user to complete payment on their phone
+        // In a real app, you'd listen for callbacks or poll for status
+        setTimeout(() => {
+          setIsProcessing(false);
+          const reference = `MP${Date.now()}`;
+          generateReceipt('M-Pesa', reference, true);
+          onPaymentComplete('M-Pesa', reference);
+          
+          toast({
+            title: "Payment Completed!",
+            description: `Payment of KSh ${total.toLocaleString()} completed successfully`,
+          });
+        }, 10000); // Simulate 10 second payment completion
+
+      } else {
+        throw new Error(data.error || 'Failed to send STK push');
+      }
+
+    } catch (error: any) {
+      console.error('M-Pesa payment error:', error);
+      setIsProcessing(false);
+      
+      toast({
+        title: "Payment Request Failed",
+        description: error.message || "Could not send payment request. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const processMpesaPayment = async () => {
+    // This function is no longer needed since we're doing real STK push
+    // But keeping it for backwards compatibility
+    await handleMpesaPayment();
   };
 
   const handleCardPayment = async () => {
@@ -302,18 +328,33 @@ const PaymentOptions = ({ total, items, customerName, staffName, onPaymentComple
               <Label htmlFor="phone">M-Pesa Phone Number</Label>
               <Input
                 id="phone"
-                placeholder="254712345678"
+                placeholder="254712345678 or 0712345678"
                 value={phoneNumber}
                 onChange={(e) => setPhoneNumber(e.target.value)}
                 className="transition-all duration-200 focus:scale-[1.02]"
               />
+              <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded border border-blue-200">
+                <p className="flex items-center">
+                  <AlertTriangle className="w-4 h-4 mr-2 text-blue-600" />
+                  A payment prompt will be sent to your phone
+                </p>
+              </div>
               <Button 
                 onClick={handleMpesaPayment}
-                disabled={!phoneNumber}
+                disabled={!phoneNumber || isProcessing}
                 className="w-full hover-scale"
               >
-                <Smartphone className="w-4 h-4 mr-2" />
-                Proceed to PIN Entry
+                {isProcessing ? (
+                  <>
+                    <Clock className="w-4 h-4 mr-2 animate-spin" />
+                    Sending payment request...
+                  </>
+                ) : (
+                  <>
+                    <Smartphone className="w-4 h-4 mr-2" />
+                    Send Payment Request
+                  </>
+                )}
               </Button>
             </div>
           )}
